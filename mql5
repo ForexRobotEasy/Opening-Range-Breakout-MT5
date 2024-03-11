@@ -1,0 +1,76 @@
+
+//+------------------------------------------------------------------+
+//|                                         Opening Range Breakout MT5 |
+//|                                        Forex Robot Easy Team         |
+//|                                        www.forexroboteasy.com   |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//| Global Variables Declaration                                     |
+//+------------------------------------------------------------------+
+datetime firstCandleOpen;   // Variable to store the opening time of the first candle
+double highRange, lowRange; // Variables to store the high and low range of the opening range
+bool tradeExecuted = false; // Flag to check if a trade has already been executed
+
+//+------------------------------------------------------------------+
+//| Expert Advisor Initialization Function                           |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+   // Set the opening time of the first candle
+   firstCandleOpen = iTime(_Symbol, PERIOD_M1, 0);
+
+   return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Expert Advisor Execution Function                                |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+   // Check if the current candle is the first candle of the trading day
+   if (iTime(_Symbol, PERIOD_M1, 0) == firstCandleOpen)
+   {
+      // Calculate the high and low range of the opening range
+      highRange = iHigh(_Symbol, PERIOD_M1, 0);
+      lowRange = iLow(_Symbol, PERIOD_M1, 0);
+
+      // Loop through the next 15 minutes to find the highest and lowest price within the opening range
+      for (int i = 1; i <= 15; i++)
+      {
+         if (iHigh(_Symbol, PERIOD_M1, i) > highRange)
+            highRange = iHigh(_Symbol, PERIOD_M1, i);
+
+         if (iLow(_Symbol, PERIOD_M1, i) < lowRange)
+            lowRange = iLow(_Symbol, PERIOD_M1, i);
+      }
+
+      // Check if the current price breaks above the high range
+      if (iClose(_Symbol, PERIOD_M1, 0) > highRange && !tradeExecuted)
+      {
+         // Execute a buy trade
+         OrderSend(_Symbol, OP_BUY, 0.01, iClose(_Symbol, PERIOD_M1, 0), 0, 0, 0, 'Opening Range Breakout', 0, 0, Green);
+         tradeExecuted = true;
+      }
+
+      // Check if the current price breaks below the low range
+      if (iClose(_Symbol, PERIOD_M1, 0) < lowRange && !tradeExecuted)
+      {
+         // Execute a sell trade
+         OrderSend(_Symbol, OP_SELL, 0.01, iClose(_Symbol, PERIOD_M1, 0), 0, 0, 0, 'Opening Range Breakout', 0, 0, Red);
+         tradeExecuted = true;
+      }
+   }
+}
+
+//+------------------------------------------------------------------+
+//| Expert Advisor Deinitialization Function                         |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+   // Reset the global variables
+   firstCandleOpen = 0;
+   highRange = 0;
+   lowRange = 0;
+   tradeExecuted = false;
+}
